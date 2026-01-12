@@ -1,0 +1,2168 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0084ff">
+    <meta name="description" content="صدفة - دردشة عشوائية مجهولة مع الغرباء">
+    <title>صدفة - دردشة عشوائية</title>
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Load MQTT Library first -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    
+    <style>
+        /* ========== CSS Variables & Reset ========== */
+        :root {
+            --primary-color: #0084ff;
+            --primary-dark: #0066cc;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-primary: #1c1e21;
+            --text-secondary: #65676b;
+            --self-bubble: #0084ff;
+            --self-bubble-text: #ffffff;
+            --partner-bubble: #e4e6eb;
+            --partner-bubble-text: #1c1e21;
+            --border-color: #dadde1;
+            --shadow-soft: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-medium: 0 4px 16px rgba(0,0,0,0.15);
+            --shadow-strong: 0 8px 32px rgba(0,0,0,0.2);
+            --radius-small: 8px;
+            --radius-medium: 16px;
+            --radius-large: 22px;
+            --radius-pill: 50px;
+            --header-height: 60px;
+            --input-height: 70px;
+            --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        body {
+            background: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+        
+        /* ========== App Container ========== */
+        .app-container {
+            max-width: 800px;
+            margin: 0 auto;
+            height: 100vh;
+            height: 100dvh; /* Dynamic viewport height for mobile */
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* ========== Header ========== */
+        .header {
+            background: var(--card-bg);
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: var(--header-height);
+            min-height: var(--header-height);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow-soft);
+            z-index: 1000;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .app-title {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-color), #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            white-space: nowrap;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            min-width: 8px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            transition: all var(--transition-normal);
+        }
+        
+        .status-dot.connected { background: var(--success-color); }
+        .status-dot.searching { background: var(--warning-color); animation: pulse 1s infinite; }
+        .status-dot.error { background: var(--danger-color); }
+        .status-dot.connecting { background: var(--warning-color); animation: pulse 0.5s infinite; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.85); }
+        }
+        
+        .header-right {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        
+        .btn-icon {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: var(--text-secondary);
+            transition: all var(--transition-fast);
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .btn-icon:active {
+            background: var(--bg-color);
+            transform: scale(0.95);
+        }
+        
+        .btn-next {
+            background: linear-gradient(135deg, var(--danger-color), #dc2626);
+            color: white;
+            padding: 8px 14px;
+            min-height: 38px;
+            border-radius: 20px;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: all var(--transition-fast);
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .btn-next:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+        
+        .btn-next:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* ========== Screens ========== */
+        .screen {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+            height: calc(100% - var(--header-height));
+        }
+        
+        .screen.active {
+            display: flex;
+            height: 100%;
+        }
+        
+        /* ========== Welcome Screen ========== */
+        .welcome-screen {
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            overflow-y: auto;
+        }
+        
+        .welcome-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 32px 24px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-strong);
+            max-width: 380px;
+            width: 100%;
+        }
+        
+        .welcome-logo {
+            font-size: 56px;
+            margin-bottom: 12px;
+        }
+        
+        .welcome-title {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+        
+        .welcome-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .features-list {
+            list-style: none;
+            text-align: right;
+            margin-bottom: 24px;
+        }
+        
+        .features-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+        
+        .features-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .features-list li::before {
+            content: '✓';
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        
+        .btn-start {
+            background: linear-gradient(135deg, var(--primary-color), #764ba2);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 25px;
+            cursor: pointer;
+            width: 100%;
+            transition: all var(--transition-normal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-start:active:not(:disabled) {
+            transform: scale(0.97);
+        }
+        
+        .btn-start:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .developer-credit {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .developer-credit span {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+        
+        /* ========== Connecting Screen ========== */
+        .connecting-screen {
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+        }
+        
+        .connecting-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px 28px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-strong);
+            max-width: 360px;
+            width: 100%;
+        }
+        
+        .connecting-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .connecting-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .connecting-desc {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+        
+        .broker-name {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 11px;
+            background: rgba(0, 132, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: inline-block;
+            word-break: break-all;
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), #764ba2);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .retry-count {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        
+        .btn-cancel-connect {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--text-secondary);
+            border: 2px solid var(--border-color);
+            padding: 10px 24px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .btn-cancel-connect:active {
+            transform: scale(0.95);
+        }
+        
+        /* ========== Chat Screen ========== */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-color);
+            overflow: hidden;
+            height: 100%;
+        }
+        
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            -webkit-overflow-scrolling: touch;
+            background: var(--bg-color);
+        }
+        
+        .messages-area::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .messages-area::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 2px;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            position: relative;
+            transition: transform 0.15s ease;
+        }
+        
+        .message.sent {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--self-bubble), #0066cc);
+            color: var(--self-bubble-text);
+            border-bottom-left-radius: 4px;
+            margin-left: 20%;
+        }
+        
+        .message.received {
+            align-self: flex-start;
+            background: var(--partner-bubble);
+            color: var(--partner-bubble-text);
+            border-bottom-right-radius: 4px;
+            margin-right: 20%;
+        }
+        
+        .message:active {
+            transform: scale(0.98);
+        }
+        
+        .message .meta {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 4px;
+            display: block;
+        }
+        
+        /* Message Types */
+        .message.sticker {
+            padding: 4px 8px;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        
+        .message.sticker.sent {
+            align-self: flex-end;
+            margin-left: 10%;
+        }
+        
+        .message.sticker.received {
+            align-self: flex-start;
+            margin-right: 10%;
+        }
+        
+        .message.sticker span {
+            font-size: 44px;
+            display: block;
+        }
+        
+        .message.image {
+            padding: 4px;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        
+        .message.image.sent {
+            align-self: flex-end;
+            margin-left: 10%;
+        }
+        
+        .message.image.received {
+            align-self: flex-start;
+            margin-right: 10%;
+        }
+        
+        .message-image {
+            max-width: 100%;
+            border-radius: 12px;
+            cursor: pointer;
+            display: block;
+        }
+        
+        .system-message {
+            align-self: center;
+            background: rgba(0, 132, 255, 0.1);
+            color: var(--primary-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            text-align: center;
+            max-width: 90%;
+            font-weight: 500;
+        }
+        
+        /* ========== Typing Indicator ========== */
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            padding: 10px 14px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin: 0 0 8px 0;
+        }
+        
+        .typing-indicator.show {
+            display: block;
+        }
+        
+        .typing-dots {
+            display: inline-flex;
+            gap: 3px;
+            margin-left: 6px;
+        }
+        
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dots span:nth-child(1) { animation-delay: 0s; }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-4px); }
+        }
+        
+        /* ========== Stickers Panel ========== */
+        .sticker-panel {
+            display: none;
+            position: fixed;
+            bottom: calc(var(--input-height) + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 16px;
+            box-shadow: var(--shadow-strong);
+            padding: 16px;
+            z-index: 999;
+            border: 1px solid var(--border-color);
+            width: calc(100% - 32px);
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+        
+        .sticker-panel.active {
+            display: block;
+        }
+        
+        .sticker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .sticker-header h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .sticker-close {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg-color);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .sticker-close:active {
+            background: var(--danger-color);
+            color: white;
+        }
+        
+        .sticker-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            max-height: 180px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+        
+        .sticker-item {
+            font-size: 26px;
+            text-align: center;
+            padding: 6px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: transform 0.1s ease;
+        }
+        
+        .sticker-item:active {
+            transform: scale(0.85);
+        }
+        
+        /* ========== Input Area ========== */
+        .input-area {
+            background: var(--card-bg);
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+            min-height: var(--input-height);
+            height: var(--input-height);
+            box-sizing: border-box;
+        }
+        
+        .input-actions {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .btn-action {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--text-secondary);
+            transition: all var(--transition-fast);
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .btn-action:active {
+            background: var(--bg-color);
+            transform: scale(0.9);
+        }
+        
+        .input-wrapper {
+            flex: 1;
+            background: var(--bg-color);
+            border-radius: 20px;
+            padding: 4px 4px 4px 16px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .input-wrapper input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            outline: none;
+            color: var(--text-primary);
+            padding: 8px 0;
+        }
+        
+        .input-wrapper input::placeholder {
+            color: var(--text-secondary);
+        }
+        
+        .btn-send {
+            width: 42px;
+            height: 42px;
+            min-width: 42px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, var(--primary-color), #764ba2);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all var(--transition-fast);
+        }
+        
+        .btn-send:active:not(:disabled) {
+            transform: scale(0.9);
+        }
+        
+        .btn-send:disabled {
+            background: var(--border-color);
+            cursor: not-allowed;
+        }
+        
+        /* ========== Disconnected Screen ========== */
+        .disconnected-screen {
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+        }
+        
+        .disconnected-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px 28px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-strong);
+            max-width: 360px;
+            width: 100%;
+        }
+        
+        .disconnected-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+        }
+        
+        .disconnected-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .disconnected-desc {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+        
+        .btn-reconnect {
+            background: linear-gradient(135deg, var(--primary-color), #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 20px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-reconnect:active {
+            transform: scale(0.97);
+        }
+        
+        .btn-home {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--text-secondary);
+            border: 2px solid var(--border-color);
+            padding: 10px 24px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 20px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .btn-home:active {
+            transform: scale(0.97);
+        }
+        
+        /* ========== Error Screen ========== */
+        .error-screen {
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+        }
+        
+        .error-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 36px 24px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-strong);
+            max-width: 380px;
+            width: 100%;
+        }
+        
+        .error-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+        }
+        
+        .error-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--danger-color);
+        }
+        
+        .error-desc {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+        
+        .error-details {
+            background: var(--bg-color);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-family: monospace;
+            text-align: right;
+            margin: 16px 0;
+            max-height: 80px;
+            overflow-y: auto;
+            word-break: break-all;
+        }
+        
+        .btn-retry {
+            background: linear-gradient(135deg, var(--primary-color), #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 20px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-retry:active {
+            transform: scale(0.97);
+        }
+        
+        /* ========== Toast Notifications ========== */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text-primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: var(--shadow-strong);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 3000;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        .toast.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .toast.success { background: var(--success-color); }
+        .toast.error { background: var(--danger-color); }
+        .toast.warning { background: var(--warning-color); }
+        
+        /* ========== Image Viewer ========== */
+        .image-viewer {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .image-viewer.active {
+            display: flex;
+        }
+        
+        .image-viewer img {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: 12px;
+        }
+        
+        .image-viewer-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* ========== Hidden Inputs ========== */
+        .hidden-input {
+            display: none;
+        }
+        
+        /* ========== Debug Panel ========== */
+        .debug-panel {
+            display: none;
+            position: fixed;
+            top: calc(var(--header-height) + 10px);
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 10px;
+            color: #00ff88;
+            max-width: 260px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 999;
+            font-family: monospace;
+        }
+        
+        .debug-panel.show {
+            display: block;
+        }
+        
+        .debug-title {
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 11px;
+        }
+        
+        .debug-line {
+            margin: 2px 0;
+            word-break: break-all;
+        }
+        
+        .debug-timestamp {
+            color: #888;
+        }
+        
+        /* ========== Mobile Responsive ========== */
+        @media (max-width: 400px) {
+            .header {
+                padding: 0 10px;
+            }
+            
+            .app-title {
+                font-size: 16px;
+            }
+            
+            .status-indicator {
+                display: none;
+            }
+            
+            .btn-next {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+            
+            .btn-icon {
+                width: 34px;
+                height: 34px;
+                min-width: 34px;
+                font-size: 14px;
+            }
+            
+            .message {
+                max-width: 85%;
+                font-size: 13px;
+                padding: 8px 12px;
+            }
+            
+            .sticker-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+            
+            .sticker-item {
+                font-size: 22px;
+                padding: 4px;
+            }
+            
+            .message.sticker span {
+                font-size: 36px;
+            }
+        }
+        
+        /* ========== Safe Area for Notched Phones ========== */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            .input-area {
+                padding-bottom: calc(10px + env(safe-area-inset-bottom));
+            }
+            
+            .toast {
+                bottom: calc(80px + env(safe-area-inset-bottom));
+            }
+            
+            .sticker-panel {
+                bottom: calc(var(--input-height) + 10px + env(safe-area-inset-bottom));
+            }
+        }
+        
+        /* ========== Reduced Motion ========== */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <span class="app-title">صدفة</span>
+                <div class="status-indicator">
+                    <span class="status-dot" id="status-dot"></span>
+                    <span id="status-text">غير متصل</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="btn-icon" onclick="toggleDebug()" title="تصحيح">⚙️</button>
+                <button class="btn-next" id="next-btn" onclick="findNewPartner()" disabled>
+                    <span>🎲</span>
+                    <span>شخص آخر</span>
+                </button>
+            </div>
+        </header>
+        
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen active">
+            <div class="welcome-screen">
+                <div class="welcome-card">
+                    <div class="welcome-logo">💬</div>
+                    <h1 class="welcome-title">صدفة</h1>
+                    <p class="welcome-subtitle">دردشة عشوائية مجهولة مع الغرباء</p>
+                    <ul class="features-list">
+                        <li>محادثة خاصة ومجهولة تماماً</li>
+                        <li>إرسال صور وملصقات بسهولة</li>
+                        <li>نظام مطابقة ذكي وموثوق</li>
+                        <li>بدون تسجيل أو تحميل تطبيقات</li>
+                    </ul>
+                    <button class="btn-start" id="start-btn" onclick="startChat()">
+                        <span>ابدأ الدردشة الآن</span>
+                        <span>🚀</span>
+                    </button>
+                    <div class="developer-credit">
+                        تم التطوير بواسطة <span>فريق أبو نواف</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Connecting Screen -->
+        <div id="connecting-screen" class="screen">
+            <div class="connecting-screen">
+                <div class="connecting-card">
+                    <div class="connecting-spinner"></div>
+                    <h2 class="connecting-title" id="connecting-title">جاري الاتصال...</h2>
+                    <p class="connecting-desc" id="connecting-desc">يرجى الانتظار</p>
+                    <div class="broker-name" id="broker-name">---</div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="connection-progress"></div>
+                    </div>
+                    <p class="retry-count" id="retry-count"></p>
+                    <button class="btn-cancel-connect" onclick="cancelConnection()">إلغاء</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat Screen -->
+        <div id="chat-screen" class="screen">
+            <div class="chat-container">
+                <div class="messages-area" id="messages-area"></div>
+                <div class="typing-indicator" id="typing-indicator">
+                    <span class="typing-dots"><span></span><span></span><span></span></span>
+                    جاري الكتابة...
+                </div>
+                
+                <!-- Sticker Panel -->
+                <div class="sticker-panel" id="sticker-panel">
+                    <div class="sticker-header">
+                        <h4>ملصقات</h4>
+                        <button class="sticker-close" onclick="toggleStickers()">✕</button>
+                    </div>
+                    <div class="sticker-grid" id="sticker-grid"></div>
+                </div>
+                
+                <!-- Input Area -->
+                <div class="input-area">
+                    <div class="input-actions">
+                        <button class="btn-action" onclick="toggleStickers()" title="ملصقات">😊</button>
+                        <button class="btn-action" onclick="triggerImageUpload()" title="صورة">📷</button>
+                    </div>
+                    <div class="input-wrapper">
+                        <input type="text" id="message-input" placeholder="اكتب رسالتك..." onkeypress="handleEnter(event)" disabled>
+                    </div>
+                    <button class="btn-send" id="send-btn" onclick="sendMessage()" disabled>➤</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Disconnected Screen -->
+        <div id="disconnected-screen" class="screen">
+            <div class="disconnected-screen">
+                <div class="disconnected-card">
+                    <div class="disconnected-icon">👋</div>
+                    <h2 class="disconnected-title" id="disconnect-title">غادر الشخص المحادثة</h2>
+                    <p class="disconnected-desc" id="disconnect-desc">هل تريد التحدث مع شخص آخر؟</p>
+                    <button class="btn-reconnect" onclick="findNewPartner()">
+                        <span>بحث عن شخص جديد</span>
+                        <span>🔍</span>
+                    </button>
+                    <button class="btn-home" onclick="goHome()">
+                        <span>العودة للرئيسية</span>
+                        <span>🏠</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Error Screen -->
+        <div id="error-screen" class="screen">
+            <div class="error-screen">
+                <div class="error-card">
+                    <div class="error-icon">⚠️</div>
+                    <h2 class="error-title" id="error-title">خطأ في الاتصال</h2>
+                    <p class="error-desc" id="error-desc">حدث خطأ أثناء محاولة الاتصال</p>
+                    <div class="error-details" id="error-details"></div>
+                    <button class="btn-retry" onclick="retryConnection()">
+                        <span>إعادة المحاولة</span>
+                        <span>🔄</span>
+                    </button>
+                    <button class="btn-home" onclick="goHome()">
+                        <span>العودة للرئيسية</span>
+                        <span>🏠</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+    
+    <!-- Image Viewer -->
+    <div class="image-viewer" id="image-viewer" onclick="closeImageViewer()">
+        <button class="image-viewer-close" onclick="closeImageViewer()">✕</button>
+        <img id="viewer-image" src="" alt="صورة مكبرة">
+    </div>
+    
+    <!-- Hidden Inputs -->
+    <input type="file" id="image-input" class="hidden-input" accept="image/*" onchange="handleImageUpload(event)">
+    
+    <!-- Debug Panel -->
+    <div class="debug-panel" id="debug-panel">
+        <div class="debug-title">🔧 لوحة التصحيح</div>
+        <div id="debug-content"></div>
+    </div>
+
+    <script>
+        // ========== CONFIGURATION ==========
+        const CONFIG = {
+            BROKERS: [
+                { url: 'wss://broker.emqx.io:8084/mqtt', name: 'EMQX (Primary)' },
+                { url: 'wss://broker.hivemq.com:8000/mqtt', name: 'HiveMQ' },
+                { url: 'wss://test.mosquitto.org:8081', name: 'Mosquitto Test' },
+                { url: 'wss://mqtt.eclipseprojects.io:443/mqtt', name: 'Eclipse' }
+            ],
+            APP_PREFIX: 'sodfa_v5_',
+            HELLO_INTERVAL: 2000,
+            HANDSHAKE_TIMEOUT: 8000,
+            CONNECTION_TIMEOUT: 15000,
+            MAX_MESSAGE_AGE: 50,
+            MAX_IMAGE_SIZE: 800,
+            IMAGE_QUALITY: 0.7,
+            MAX_PAYLOAD_SIZE: 100000,
+            MAX_RETRIES: 3
+        };
+        
+        // ========== STICKERS ==========
+        const STICKERS = [
+            '👋', '🤝', '👍', '👎', '❤️', '🧡', '💛', '💚', '💙', '💜',
+            '🖤', '🤍', '🤎', '💔', '💕', '💞', '💓', '💗', '💖', '💘',
+            '💝', '💟', '❣️', '💌', '💋', '💬', '💭', '💤', '💢', '💥',
+            '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '😊',
+            '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '😋', '😛',
+            '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔', '🤐', '🤨',
+            '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥', '😌', '😔',
+            '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '🥵',
+            '🥶', '🥴', '😵', '🤯', '🤠', '🥳', '😎', '🤓', '🧐', '😕',
+            '😮', '😯', '😲', '😳', '🥺', '😦', '😧', '😨', '😰', '😥',
+            '😢', '😭', '😱', '😖', '😣', '😞', '😓', '😩', '😫', '🥱',
+            '👶', '👧', '🧒', '👦', '👩', '🧑', '👨', '👵', '🧓', '👴',
+            '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯',
+            '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆',
+            '⭐', '🌟', '✨', '💫', '🌙', '☀️', '🌈', '⚡', '🎉', '🎊',
+            '🎵', '🎶', '🎤', '🎧', '🍕', '🍔', '🍟', '📱', '💻', '✅'
+        ];
+        
+        // ========== STATE MANAGEMENT ==========
+        const STATES = {
+            IDLE: 'IDLE',
+            CONNECTING: 'CONNECTING',
+            SEARCHING: 'SEARCHING',
+            NEGOTIATING: 'NEGOTIATING',
+            CONNECTED: 'CONNECTED',
+            ERROR: 'ERROR'
+        };
+        
+        class AppState {
+            constructor() {
+                this.state = STATES.IDLE;
+                this.myId = this.generateUUID();
+                this.client = null;
+                this.currentBroker = null;
+                this.brokerIndex = 0;
+                this.retryCount = 0;
+                this.partnerId = null;
+                this.roomId = null;
+                this.helloIntervalId = null;
+                this.handshakeTimeoutId = null;
+                this.connectionTimeoutId = null;
+                this.progressIntervalId = null;
+                this.typingTimeoutId = null;
+                this.partnerTyping = false;
+                this.isTyping = false;
+                this.subscriptions = new Set();
+                this.messageCount = 0;
+                this.isIntentionallyClosing = false;
+                this.lastError = null;
+            }
+            
+            generateUUID() {
+                return 'xxxx-xxxx-xxxx-xxxx'.replace(/[xy]/g, c => {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                }) + '-' + Date.now().toString(36);
+            }
+            
+            get isSearching() { return this.state === STATES.SEARCHING; }
+            get isNegotiating() { return this.state === STATES.NEGOTIATING; }
+            get isConnected() { return this.state === STATES.CONNECTED; }
+            get isIdle() { return this.state === STATES.IDLE; }
+            get isConnecting() { return this.state === STATES.CONNECTING; }
+            
+            reset() {
+                this.cleanup();
+                this.state = STATES.IDLE;
+                this.partnerId = null;
+                this.roomId = null;
+                this.partnerTyping = false;
+                this.isTyping = false;
+                this.messageCount = 0;
+                this.brokerIndex = 0;
+                this.retryCount = 0;
+            }
+            
+            cleanup() {
+                const ids = ['helloIntervalId', 'handshakeTimeoutId', 'connectionTimeoutId', 'progressIntervalId', 'typingTimeoutId'];
+                ids.forEach(id => {
+                    if (this[id]) {
+                        clearTimeout(this[id]);
+                        clearInterval(this[id]);
+                        this[id] = null;
+                    }
+                });
+                
+                if (this.client && this.client.connected) {
+                    this.isIntentionallyClosing = true;
+                    try {
+                        this.client.end(false, () => {
+                            console.log('[MQTT] Connection closed gracefully');
+                        });
+                    } catch(e) {}
+                    this.isIntentionallyClosing = false;
+                }
+                this.client = null;
+                this.subscriptions.clear();
+            }
+        }
+        
+        const app = new AppState();
+        
+        // ========== DOM ELEMENTS ==========
+        const elements = {
+            screens: {
+                welcome: document.getElementById('welcome-screen'),
+                connecting: document.getElementById('connecting-screen'),
+                chat: document.getElementById('chat-screen'),
+                disconnected: document.getElementById('disconnected-screen'),
+                error: document.getElementById('error-screen')
+            },
+            statusDot: document.getElementById('status-dot'),
+            statusText: document.getElementById('status-text'),
+            startBtn: document.getElementById('start-btn'),
+            nextBtn: document.getElementById('next-btn'),
+            messagesArea: document.getElementById('messages-area'),
+            messageInput: document.getElementById('message-input'),
+            sendBtn: document.getElementById('send-btn'),
+            typingIndicator: document.getElementById('typing-indicator'),
+            stickerPanel: document.getElementById('sticker-panel'),
+            stickerGrid: document.getElementById('sticker-grid'),
+            connectingTitle: document.getElementById('connecting-title'),
+            connectingDesc: document.getElementById('connecting-desc'),
+            brokerName: document.getElementById('broker-name'),
+            connectionProgress: document.getElementById('connection-progress'),
+            retryCount: document.getElementById('retry-count'),
+            toast: document.getElementById('toast'),
+            imageViewer: document.getElementById('image-viewer'),
+            viewerImage: document.getElementById('viewer-image'),
+            debugPanel: document.getElementById('debug-panel'),
+            debugContent: document.getElementById('debug-content'),
+            errorTitle: document.getElementById('error-title'),
+            errorDesc: document.getElementById('error-desc'),
+            errorDetails: document.getElementById('error-details')
+        };
+        
+        // ========== DEBUG LOGGING ==========
+        function log(level, message) {
+            const timestamp = new Date().toLocaleTimeString();
+            console.log(`[${level}] ${message}`);
+            
+            const line = document.createElement('div');
+            line.className = 'debug-line';
+            line.innerHTML = `<span class="debug-timestamp">[${timestamp}]</span> <span style="color: ${level === 'ERROR' ? '#ff4444' : level === 'WARN' ? '#ffaa00' : '#00ff88'}">[${level}]</span> ${message}`;
+            elements.debugContent.insertBefore(line, elements.debugContent.firstChild);
+            
+            while (elements.debugContent.children.length > 50) {
+                elements.debugContent.removeChild(elements.debugContent.lastChild);
+            }
+        }
+        
+        function toggleDebug() {
+            elements.debugPanel.classList.toggle('show');
+        }
+        
+        // ========== INITIALIZATION ==========
+        function init() {
+            log('INFO', 'Application initialized');
+            log('INFO', 'Client ID: ' + app.myId);
+            
+            if (typeof mqtt === 'undefined') {
+                log('ERROR', 'MQTT library failed to load!');
+                showError('فشل تحميل مكتبة الاتصال', 'يرجى تحديث الصفحة أو التحقق من اتصال الإنترنت', 'mqtt.min.js not loaded');
+                return;
+            }
+            
+            log('INFO', 'MQTT library loaded successfully');
+            initStickers();
+            updateStatus('idle');
+        }
+        
+        function initStickers() {
+            elements.stickerGrid.innerHTML = STICKERS.map(s => 
+                `<div class="sticker-item" onclick="sendSticker('${s}')">${s}</div>`
+            ).join('');
+        }
+        
+        // ========== UI HELPERS ==========
+        function showScreen(screenName) {
+            Object.values(elements.screens).forEach(s => s.classList.remove('active'));
+            elements.screens[screenName].classList.add('active');
+        }
+        
+        function updateStatus(status, text = null) {
+            elements.statusDot.className = 'status-dot ' + status;
+            elements.statusText.textContent = text || getStatusText(status);
+        }
+        
+        function getStatusText(status) {
+            const texts = {
+                idle: 'غير متصل',
+                connecting: 'جاري الاتصال...',
+                searching: 'جاري البحث...',
+                negotiating: 'جاري الاتصال...',
+                connected: 'متصح',
+                error: 'خطأ'
+            };
+            return texts[status] || status;
+        }
+        
+        function showToast(message, type = 'success') {
+            elements.toast.textContent = message;
+            elements.toast.className = 'toast show ' + type;
+            setTimeout(() => elements.toast.classList.remove('show'), 4000);
+        }
+        
+        function showError(title, desc, details) {
+            log('ERROR', details);
+            elements.errorTitle.textContent = title;
+            elements.errorDesc.textContent = desc;
+            elements.errorDetails.textContent = details;
+            app.lastError = { title, desc, details };
+            updateStatus('error');
+            showScreen('error');
+        }
+        
+        function addSystemMessage(text) {
+            const msg = document.createElement('div');
+            msg.className = 'system-message';
+            msg.textContent = text;
+            elements.messagesArea.appendChild(msg);
+            scrollToBottom();
+        }
+        
+        function addMessage(content, type, messageType = 'text') {
+            const msg = document.createElement('div');
+            msg.className = 'message ' + type;
+            
+            if (messageType === 'sticker') {
+                msg.innerHTML = `<span>${content}</span>`;
+            } else if (messageType === 'image') {
+                msg.innerHTML = `<img src="${content}" class="message-image" onclick="openImageViewer('${content}')" alt="صورة">`;
+            } else {
+                msg.textContent = sanitizeText(content);
+            }
+            
+            const time = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
+            msg.innerHTML += `<span class="meta">${time}</span>`;
+            
+            elements.messagesArea.appendChild(msg);
+            
+            app.messageCount++;
+            while (elements.messagesArea.children.length > CONFIG.MAX_MESSAGE_AGE * 2) {
+                elements.messagesArea.removeChild(elements.messagesArea.firstChild);
+            }
+            
+            scrollToBottom();
+        }
+        
+        function scrollToBottom() {
+            elements.messagesArea.scrollTop = elements.messagesArea.scrollHeight;
+        }
+        
+        function sanitizeText(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // ========== MQTT CONNECTION ==========
+        function getLobbyTopic() { return CONFIG.APP_PREFIX + 'lobby'; }
+        function getInboxTopic(id) { return CONFIG.APP_PREFIX + 'inbox/' + id; }
+        function getRoomTopic(id) { return CONFIG.APP_PREFIX + 'room/' + id; }
+        
+        async function connectToBroker(brokerUrl, brokerName) {
+            return new Promise((resolve, reject) => {
+                log('INFO', `Attempting connection to ${brokerName}`);
+                
+                if (app.client) {
+                    app.isIntentionallyClosing = true;
+                    try { app.client.end(); } catch(e) {}
+                    app.client = null;
+                    app.isIntentionallyClosing = false;
+                }
+                
+                let connected = false;
+                let errorOccurred = false;
+                
+                const timeoutId = setTimeout(() => {
+                    if (!connected && !errorOccurred) {
+                        errorOccurred = true;
+                        log('WARN', `Connection timeout to ${brokerName}`);
+                        reject(new Error('Connection timeout'));
+                    }
+                }, CONFIG.CONNECTION_TIMEOUT);
+                
+                try {
+                    app.client = mqtt.connect(brokerUrl, {
+                        clientId: app.myId,
+                        clean: true,
+                        keepalive: 30,
+                        reconnectPeriod: 0,
+                        connectTimeout: CONFIG.CONNECTION_TIMEOUT
+                    });
+                    
+                    app.client.on('connect', () => {
+                        connected = true;
+                        clearTimeout(timeoutId);
+                        log('INFO', `Successfully connected to ${brokerName}`);
+                        resolve(app.client);
+                    });
+                    
+                    app.client.on('error', (err) => {
+                        if (connected) return;
+                        errorOccurred = true;
+                        clearTimeout(timeoutId);
+                        log('ERROR', `Error connecting to ${brokerName}: ${err.message}`);
+                        reject(err);
+                    });
+                    
+                    app.client.on('close', () => {
+                        if (app.isIntentionallyClosing || connected) return;
+                        errorOccurred = true;
+                        clearTimeout(timeoutId);
+                        log('WARN', `Connection closed to ${brokerName}`);
+                        reject(new Error('Connection closed'));
+                    });
+                    
+                    app.client.on('message', handleMessage);
+                    
+                } catch (err) {
+                    errorOccurred = true;
+                    clearTimeout(timeoutId);
+                    log('ERROR', `Exception connecting to ${brokerName}: ${err.message}`);
+                    reject(err);
+                }
+            });
+        }
+        
+        async function startChat() {
+            log('INFO', 'Starting chat process...');
+            
+            app.reset();
+            elements.debugContent.innerHTML = '';
+            
+            showScreen('connecting');
+            updateStatus('connecting');
+            elements.startBtn.disabled = true;
+            
+            let lastError = null;
+            
+            for (let i = 0; i < CONFIG.BROKERS.length; i++) {
+                const broker = CONFIG.BROKERS[i];
+                app.brokerIndex = i;
+                
+                log('INFO', `Broker attempt ${i + 1}/${CONFIG.BROKERS.length}: ${broker.name}`);
+                
+                elements.connectingTitle.textContent = 'جاري الاتصال...';
+                elements.connectingDesc.textContent = 'جاري محاولة الاتصال بالخادم';
+                elements.brokerName.textContent = broker.name;
+                elements.retryCount.textContent = `محاولة ${i + 1} من ${CONFIG.BROKERS.length}`;
+                
+                let progress = (i / CONFIG.BROKERS.length) * 100;
+                elements.connectionProgress.style.width = progress + '%';
+                
+                try {
+                    await connectToBroker(broker.url, broker.name);
+                    log('INFO', 'Connected, starting search...');
+                    elements.connectionProgress.style.width = '100%';
+                    await startSearch();
+                    return;
+                    
+                } catch (err) {
+                    lastError = err;
+                    log('WARN', `Failed to connect to ${broker.name}: ${err.message}`);
+                    
+                    if (i < CONFIG.BROKERS.length - 1) {
+                        log('INFO', `Waiting 2 seconds before trying next broker...`);
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                }
+            }
+            
+            log('ERROR', 'All brokers failed');
+            elements.startBtn.disabled = false;
+            showError(
+                'تعذر الاتصال',
+                'حدث خطأ أثناء محاولة الاتصال بجميع الخوادم المتاحة',
+                `جميع المحاولات فشلت.\nآخر خطأ: ${lastError?.message || 'Unknown error'}`
+            );
+        }
+        
+        function cancelConnection() {
+            log('INFO', 'User canceled connection');
+            app.reset();
+            elements.startBtn.disabled = false;
+            showScreen('welcome');
+            updateStatus('idle');
+            showToast('تم إلغاء محاولة الاتصال', 'warning');
+        }
+        
+        function retryConnection() {
+            log('INFO', 'Retrying connection...');
+            startChat();
+        }
+        
+        // ========== SEARCH AND MATCHMAKING ==========
+        async function startSearch() {
+            log('INFO', 'Starting search for partner...');
+            
+            app.state = STATES.SEARCHING;
+            updateStatus('searching');
+            
+            elements.connectingTitle.textContent = 'جاري البحث عن شخص...';
+            elements.connectingDesc.textContent = 'قد يستغرق بعض الوقت';
+            
+            subscribe(getLobbyTopic());
+            subscribe(getInboxTopic(app.myId));
+            
+            app.helloIntervalId = setInterval(() => {
+                if (app.isSearching) {
+                    publish(getLobbyTopic(), {
+                        type: 'HELLO',
+                        from: app.myId,
+                        timestamp: Date.now()
+                    });
+                }
+            }, CONFIG.HELLO_INTERVAL);
+            
+            let progress = 0;
+            app.progressIntervalId = setInterval(() => {
+                if (!app.isSearching) {
+                    clearInterval(app.progressIntervalId);
+                    return;
+                }
+                progress = (progress + 0.5) % 100;
+                elements.connectionProgress.style.width = (50 + progress/2) + '%';
+            }, 50);
+            
+            app.connectionTimeoutId = setTimeout(() => {
+                if (app.isSearching) {
+                    log('WARN', 'Search timeout - no partners found');
+                    elements.connectingTitle.textContent = 'لا يوجد أحد حالياً';
+                    elements.connectingDesc.textContent = 'جرب مرة أخرى لاحقاً';
+                    elements.retryCount.textContent = 'لا يوجد مستخدمون متاحون';
+                    setTimeout(() => {
+                        if (app.isSearching) {
+                            app.reset();
+                            elements.startBtn.disabled = false;
+                            showScreen('welcome');
+                            updateStatus('idle');
+                        }
+                    }, 3000);
+                }
+            }, CONFIG.CONNECTION_TIMEOUT);
+            
+            publish(getLobbyTopic(), {
+                type: 'HELLO',
+                from: app.myId,
+                timestamp: Date.now()
+            });
+        }
+        
+        function subscribe(topic) {
+            if (!app.subscriptions.has(topic) && app.client) {
+                app.client.subscribe(topic, (err) => {
+                    if (!err) {
+                        app.subscriptions.add(topic);
+                        log('INFO', 'Subscribed to: ' + topic);
+                    } else {
+                        log('ERROR', 'Subscribe failed to ' + topic + ': ' + err.message);
+                    }
+                });
+            }
+        }
+        
+        function unsubscribe(topic) {
+            if (app.subscriptions.has(topic) && app.client) {
+                app.client.unsubscribe(topic, (err) => {
+                    if (!err) {
+                        app.subscriptions.delete(topic);
+                    }
+                });
+            }
+        }
+        
+        function publish(topic, message) {
+            if (app.client && app.client.connected) {
+                try {
+                    app.client.publish(topic, JSON.stringify(message));
+                } catch (err) {
+                    log('ERROR', 'Publish failed: ' + err.message);
+                }
+            }
+        }
+        
+        // ========== MESSAGE HANDLING ==========
+        async function handleMessage(topic, message) {
+            try {
+                const data = JSON.parse(message.toString());
+                const from = data.from;
+                
+                if (from === app.myId) return;
+                
+                log('INFO', `Message from ${from.substring(0, 8)}: ${data.type}`);
+                
+                if (topic === getLobbyTopic() && app.isSearching) {
+                    if (data.type === 'HELLO') {
+                        if (from > app.myId) {
+                            log('INFO', `Initiating handshake with ${from.substring(0, 8)}`);
+                            await initiateHandshake(from);
+                        }
+                    }
+                }
+                
+                if (topic === getInboxTopic(app.myId)) {
+                    switch (data.type) {
+                        case 'OFFER': await handleOffer(data); break;
+                        case 'ACCEPT': await handleAccept(data); break;
+                        case 'ACK': await handleAck(data); break;
+                        case 'BUSY': log('INFO', 'Partner is busy'); break;
+                        case 'CANCEL': handleCancel(from); break;
+                    }
+                }
+                
+                if (app.isConnected && app.roomId && topic === getRoomTopic(app.roomId)) {
+                    switch (data.type) {
+                        case 'MSG': addMessage(data.content, 'received', 'text'); break;
+                        case 'IMAGE': addMessage(data.content, 'received', 'image'); break;
+                        case 'STICKER': addMessage(data.content, 'received', 'sticker'); break;
+                        case 'TYPING': showPartnerTyping(); break;
+                        case 'STOP_TYPING': hidePartnerTyping(); break;
+                        case 'BYE': handlePartnerLeft('غادر الشخص المحادثة'); break;
+                    }
+                }
+            } catch (err) {
+                log('ERROR', 'Message parse error: ' + err.message);
+            }
+        }
+        
+        // ========== MATCHMAKING PROTOCOL ==========
+        async function initiateHandshake(targetId) {
+            if (!app.isSearching) return;
+            
+            log('INFO', `Sending OFFER to ${targetId.substring(0, 8)}`);
+            app.state = STATES.NEGOTIATING;
+            app.partnerId = targetId;
+            
+            if (app.helloIntervalId) {
+                clearInterval(app.helloIntervalId);
+                app.helloIntervalId = null;
+            }
+            
+            const roomId = app.generateUUID();
+            publish(getInboxTopic(targetId), {
+                type: 'OFFER',
+                from: app.myId,
+                room: roomId,
+                timestamp: Date.now()
+            });
+            
+            app.handshakeTimeoutId = setTimeout(() => {
+                log('WARN', 'Handshake timeout');
+                if (app.isNegotiating) {
+                    publish(getInboxTopic(targetId), { type: 'CANCEL', from: app.myId });
+                    cancelHandshake('انتهت مهلة الاتصال');
+                }
+            }, CONFIG.HANDSHAKE_TIMEOUT);
+        }
+        
+        async function handleOffer(data) {
+            if (!app.isSearching && !app.isNegotiating) {
+                publish(getInboxTopic(data.from), { type: 'BUSY', from: app.myId });
+                return;
+            }
+            
+            log('INFO', `Received OFFER from ${data.from.substring(0, 8)}`);
+            
+            if (app.helloIntervalId) {
+                clearInterval(app.helloIntervalId);
+                app.helloIntervalId = null;
+            }
+            
+            app.state = STATES.NEGOTIATING;
+            app.partnerId = data.from;
+            app.roomId = data.room;
+            
+            publish(getInboxTopic(data.from), {
+                type: 'ACCEPT',
+                from: app.myId,
+                room: data.room,
+                timestamp: Date.now()
+            });
+            
+            app.handshakeTimeoutId = setTimeout(() => {
+                if (app.isNegotiating) {
+                    publish(getInboxTopic(app.partnerId), { type: 'CANCEL', from: app.myId });
+                    cancelHandshake('لم يتم تأكيد الاتصال');
+                }
+            }, CONFIG.HANDSHAKE_TIMEOUT);
+        }
+        
+        async function handleAccept(data) {
+            if (!app.isNegotiating || app.partnerId !== data.from) return;
+            
+            log('INFO', 'Received ACCEPT');
+            
+            clearTimeout(app.handshakeTimeoutId);
+            app.handshakeTimeoutId = null;
+            
+            app.roomId = data.room;
+            
+            publish(getInboxTopic(data.from), {
+                type: 'ACK',
+                from: app.myId,
+                room: data.room,
+                timestamp: Date.now()
+            });
+            
+            await establishConnection();
+        }
+        
+        async function handleAck(data) {
+            if (!app.isNegotiating || app.partnerId !== data.from) return;
+            
+            log('INFO', 'Received ACK');
+            
+            clearTimeout(app.handshakeTimeoutId);
+            app.handshakeTimeoutId = null;
+            
+            app.roomId = data.room;
+            await establishConnection();
+        }
+        
+        function handleCancel(from) {
+            if (app.isNegotiating && app.partnerId === from) {
+                log('INFO', 'Received CANCEL from partner');
+                cancelHandshake('ألغى الطرف الآخر الاتصال');
+            }
+        }
+        
+        async function establishConnection() {
+            log('INFO', `Connected in room: ${app.roomId}`);
+            
+            app.state = STATES.CONNECTED;
+            
+            clearTimeout(app.handshakeTimeoutId);
+            app.handshakeTimeoutId = null;
+            
+            subscribe(getRoomTopic(app.roomId));
+            
+            unsubscribe(getLobbyTopic());
+            unsubscribe(getInboxTopic(app.myId));
+            
+            if (app.helloIntervalId) {
+                clearInterval(app.helloIntervalId);
+                app.helloIntervalId = null;
+            }
+            if (app.progressIntervalId) {
+                clearInterval(app.progressIntervalId);
+                app.progressIntervalId = null;
+            }
+            
+            showScreen('chat');
+            elements.messagesArea.innerHTML = '';
+            addSystemMessage('تم الاتصال! 👋');
+            addSystemMessage('أهلاً وسهلاً! كيف حالك؟');
+            
+            elements.messageInput.disabled = false;
+            elements.sendBtn.disabled = false;
+            elements.nextBtn.disabled = false;
+            elements.messageInput.focus();
+            
+            updateStatus('connected');
+            showToast('تم الاتصال بشخص غريب!', 'success');
+        }
+        
+        function cancelHandshake(reason) {
+            log('WARN', `Handshake cancelled: ${reason}`);
+            app.reset();
+            showScreen('welcome');
+            updateStatus('idle');
+            elements.startBtn.disabled = false;
+        }
+        
+        // ========== CHAT FUNCTIONS ==========
+        function sendMessage() {
+            const text = elements.messageInput.value.trim();
+            if (!text || !app.isConnected) return;
+            
+            addMessage(text, 'sent', 'text');
+            publish(getRoomTopic(app.roomId), {
+                type: 'MSG',
+                from: app.myId,
+                content: text,
+                timestamp: Date.now()
+            });
+            
+            elements.messageInput.value = '';
+            elements.messageInput.focus();
+            sendStopTyping();
+        }
+        
+        function handleEnter(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+        
+        // ========== IMAGE SHARING ==========
+        function triggerImageUpload() {
+            document.getElementById('image-input').click();
+        }
+        
+        async function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                showToast('يرجى اختيار ملف صورة', 'error');
+                return;
+            }
+            
+            showToast('جاري معالجة الصورة...', 'warning');
+            
+            try {
+                const compressed = await compressImage(file);
+                addMessage(compressed, 'sent', 'image');
+                
+                if (app.isConnected) {
+                    publish(getRoomTopic(app.roomId), {
+                        type: 'IMAGE',
+                        from: app.myId,
+                        content: compressed,
+                        timestamp: Date.now()
+                    });
+                }
+                
+                showToast('تم إرسال الصورة', 'success');
+            } catch (err) {
+                log('ERROR', 'Image upload failed: ' + err.message);
+                showToast('فشل في إرسال الصورة', 'error');
+            }
+            
+            event.target.value = '';
+        }
+        
+        function compressImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > CONFIG.MAX_IMAGE_SIZE || height > CONFIG.MAX_IMAGE_SIZE) {
+                            if (width > height) {
+                                height = (height * CONFIG.MAX_IMAGE_SIZE) / width;
+                                width = CONFIG.MAX_IMAGE_SIZE;
+                            } else {
+                                width = (width * CONFIG.MAX_IMAGE_SIZE) / height;
+                                height = CONFIG.MAX_IMAGE_SIZE;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        let quality = CONFIG.IMAGE_QUALITY;
+                        let dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        
+                        while (dataUrl.length > CONFIG.MAX_PAYLOAD_SIZE && quality > 0.1) {
+                            quality -= 0.1;
+                            dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        }
+                        
+                        if (dataUrl.length > CONFIG.MAX_PAYLOAD_SIZE) {
+                            reject(new Error('Image too large even after compression'));
+                        } else {
+                            resolve(dataUrl);
+                        }
+                    };
+                    img.onerror = () => reject(new Error('Failed to load image'));
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => reject(new Error('Failed to read file'));
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function openImageViewer(src) {
+            elements.viewerImage.src = src;
+            elements.imageViewer.classList.add('active');
+        }
+        
+        function closeImageViewer() {
+            elements.imageViewer.classList.remove('active');
+        }
+        
+        // ========== STICKERS ==========
+        function toggleStickers() {
+            elements.stickerPanel.classList.toggle('active');
+        }
+        
+        function sendSticker(sticker) {
+            if (!app.isConnected) return;
+            
+            addMessage(sticker, 'sent', 'sticker');
+            publish(getRoomTopic(app.roomId), {
+                type: 'STICKER',
+                from: app.myId,
+                content: sticker,
+                timestamp: Date.now()
+            });
+            
+            elements.stickerPanel.classList.remove('active');
+        }
+        
+        // ========== TYPING INDICATOR ==========
+        function handleTyping() {
+            if (!app.isConnected) return;
+            
+            if (!app.isTyping) {
+                app.isTyping = true;
+                publish(getRoomTopic(app.roomId), { type: 'TYPING', from: app.myId });
+            }
+            
+            if (app.typingTimeoutId) {
+                clearTimeout(app.typingTimeoutId);
+            }
+            
+            app.typingTimeoutId = setTimeout(sendStopTyping, 1000);
+        }
+        
+        function sendStopTyping() {
+            if (app.isTyping && app.isConnected) {
+                app.isTyping = false;
+                publish(getRoomTopic(app.roomId), { type: 'STOP_TYPING', from: app.myId });
+            }
+        }
+        
+        function showPartnerTyping() {
+            elements.typingIndicator.classList.add('show');
+            scrollToBottom();
+        }
+        
+        function hidePartnerTyping() {
+            elements.typingIndicator.classList.remove('show');
+        }
+        
+        // ========== NAVIGATION ==========
+        function findNewPartner() {
+            log('INFO', 'Finding new partner...');
+            
+            if (app.isConnected && app.roomId) {
+                publish(getRoomTopic(app.roomId), { type: 'BYE', from: app.myId });
+            }
+            
+            cleanup();
+            startChat();
+        }
+        
+        function goHome() {
+            cleanup();
+            showScreen('welcome');
+            updateStatus('idle');
+            elements.startBtn.disabled = false;
+        }
+        
+        function cleanup() {
+            log('INFO', 'Cleaning up...');
+            app.reset();
+            
+            elements.messageInput.disabled = true;
+            elements.sendBtn.disabled = true;
+            elements.nextBtn.disabled = true;
+            elements.typingIndicator.classList.remove('show');
+            elements.stickerPanel.classList.remove('active');
+        }
+        
+        function handlePartnerLeft(reason) {
+            log('INFO', 'Partner left: ' + reason);
+            
+            cleanup();
+            
+            document.getElementById('disconnect-title').textContent = reason;
+            document.getElementById('disconnect-desc').textContent = 'هل تريد التحدث مع شخص آخر؟';
+            showScreen('disconnected');
+            showToast(reason, 'warning');
+        }
+        
+        // ========== EVENT LISTENERS ==========
+        elements.messageInput.addEventListener('input', handleTyping);
+        
+        window.addEventListener('beforeunload', () => {
+            if (app.isConnected && app.roomId) {
+                try {
+                    navigator.sendBeacon(getRoomTopic(app.roomId), JSON.stringify({ type: 'BYE', from: app.myId }));
+                } catch(e) {}
+            }
+            app.isIntentionallyClosing = true;
+            if (app.client) {
+                try { app.client.end(); } catch(e) {}
+            }
+        });
+        
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                if ((app.isConnected || app.isSearching) && (!app.client || !app.client.connected)) {
+                    log('INFO', 'Tab became visible, reconnecting...');
+                    if (app.isConnected) {
+                        handlePartnerLeft('انقطع الاتصال');
+                    } else {
+                        startChat();
+                    }
+                }
+            }
+        });
+        
+        // ========== START ==========
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
