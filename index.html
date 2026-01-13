@@ -861,6 +861,213 @@
             transform: scale(0.95);
         }
         
+        /* ========== About Modal ========== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 4000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 24px;
+            max-width: 420px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-strong);
+            border: 1px solid var(--border-color);
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+        
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg-color);
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-fast);
+        }
+        
+        .modal-close:active {
+            background: var(--danger-color);
+            color: white;
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+        
+        .about-section {
+            margin-bottom: 28px;
+        }
+        
+        .about-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .about-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .about-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+        
+        .services-list {
+            list-style: none;
+        }
+        
+        .service-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px;
+            background: var(--bg-color);
+            border-radius: 14px;
+            margin-bottom: 10px;
+            transition: all var(--transition-fast);
+        }
+        
+        .service-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .service-item:active {
+            transform: scale(0.98);
+            background: rgba(14, 165, 233, 0.08);
+        }
+        
+        .service-icon {
+            font-size: 22px;
+            min-width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(14, 165, 233, 0.1);
+            border-radius: 10px;
+        }
+        
+        .service-info {
+            flex: 1;
+        }
+        
+        .service-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .service-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        
+        .cta-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all var(--transition-normal);
+            box-shadow: var(--shadow-medium);
+        }
+        
+        .cta-button:active {
+            transform: scale(0.97);
+        }
+        
+        .modal-footer {
+            padding: 16px 24px 20px;
+            text-align: center;
+        }
+        
+        .modal-footer-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .modal-footer-link {
+            color: var(--primary-color);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .modal-footer-link:active {
+            text-decoration: underline;
+        }
+        
+        /* Safe area for modal */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            .modal-content {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
+        
         .footer-icon {
             font-size: 14px;
         }
@@ -1223,6 +1430,7 @@
                 </div>
             </div>
             <div class="header-right">
+                <button class="btn-icon" onclick="openAboutModal()" title="معلومات">ℹ️</button>
                 <button class="btn-icon" onclick="toggleDebug()" title="تصحيح">⚙️</button>
                 <button class="btn-next" id="next-btn" onclick="findNewPartner()" disabled>
                     <span>🎲</span>
@@ -1367,11 +1575,75 @@
         <!-- Footer -->
         <footer class="footer" id="app-footer">
             <span class="footer-text">تم التطوير والحماية بواسطة </span>
-            <a href="https://t.me/abonawaf_team" target="_blank" class="footer-link">
+            <a href="https://elias0878.github.io/accounts/" target="_blank" class="footer-link">
                 <span class="footer-icon">🛡️</span>
                 <span>فريق أبو نواف</span> 🇸🇦
             </a>
         </footer>
+        
+        <!-- About Modal -->
+        <div class="modal-overlay" id="about-modal" onclick="closeAboutModal(event)">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <span>💬</span>
+                        <span>عن صدفة</span>
+                    </h3>
+                    <button class="modal-close" onclick="closeAboutModal()">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div class="about-section">
+                        <h4 class="about-title">
+                            <span>ℹ️</span>
+                            <span>منصة صدفة</span>
+                        </h4>
+                        <p class="about-text">
+                            صدفة هي منصة دردشة فورية آمنة، تمنحك حرية التواصل بخصوصية تامة وبدون تسجيل. نضمن لك بيئة محمية وتقنيات تشفير متقدمة.
+                        </p>
+                    </div>
+                    
+                    <div class="about-section">
+                        <h4 class="about-title">
+                            <span>🛡️</span>
+                            <span>خدمات فريق أبو نواف</span>
+                        </h4>
+                        <ul class="services-list">
+                            <li class="service-item">
+                                <div class="service-icon">🔐</div>
+                                <div class="service-info">
+                                    <div class="service-name">استعادة الحسابات</div>
+                                    <div class="service-desc">سناب، انستقرام، تويتر وحل مشاكل الإغلاق</div>
+                                </div>
+                            </li>
+                            <li class="service-item">
+                                <div class="service-icon">🛡️</div>
+                                <div class="service-info">
+                                    <div class="service-name">الأمن السيبراني</div>
+                                    <div class="service-desc">الحماية من الابتزاز والاختراق</div>
+                                </div>
+                            </li>
+                            <li class="service-item">
+                                <div class="service-icon">💻</div>
+                                <div class="service-info">
+                                    <div class="service-name">البرمجيات والاستشارات</div>
+                                    <div class="service-desc">برمجيات خاصة واستشارات تقنية متكاملة</div>
+                                </div>
+                            </li>
+                        </ul>
+                        <button class="cta-button" onclick="window.open('https://elias0878.github.io/accounts/', '_blank')">
+                            <span>📞</span>
+                            <span>تواصل معنا / طلب خدمة</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <p class="modal-footer-text">
+                        تم التطوير والحماية بواسطة 
+                        <a href="https://elias0878.github.io/accounts/" target="_blank" class="modal-footer-link">فريق أبو نواف</a>
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
     
     <!-- Toast Notification -->
@@ -1555,7 +1827,8 @@
             errorTitle: document.getElementById('error-title'),
             errorDesc: document.getElementById('error-desc'),
             errorDetails: document.getElementById('error-details'),
-            footer: document.getElementById('app-footer')
+            footer: document.getElementById('app-footer'),
+            aboutModal: document.getElementById('about-modal')
         };
         
         // ========== TEXT SLIDER ==========
@@ -1589,6 +1862,23 @@
             document.querySelectorAll('.slider-message').forEach(msg => {
                 msg.classList.remove('active', 'fade-out');
             });
+        }
+        
+        // ========== ABOUT MODAL ==========
+        function openAboutModal() {
+            if (elements.aboutModal) {
+                elements.aboutModal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        
+        function closeAboutModal(event) {
+            if (!event || event.target === elements.aboutModal || event.type === 'click') {
+                if (elements.aboutModal) {
+                    elements.aboutModal.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            }
         }
         
         // ========== DEBUG LOGGING ==========
@@ -2390,6 +2680,13 @@
                         startChat();
                     }
                 }
+            }
+        });
+        
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && elements.aboutModal && elements.aboutModal.classList.contains('active')) {
+                closeAboutModal();
             }
         });
         
