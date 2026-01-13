@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#0084ff">
+    <meta name="theme-color" content="#0ea5e9">
     <meta name="description" content="صدفة - دردشة عشوائية مجهولة مع الغرباء">
     <title>صدفة - دردشة عشوائية</title>
     
@@ -18,29 +18,32 @@
     <style>
         /* ========== CSS Variables & Reset ========== */
         :root {
-            --primary-color: #0084ff;
-            --primary-dark: #0066cc;
+            --primary-color: #0ea5e9;
+            --primary-light: #38bdf8;
+            --primary-dark: #0284c7;
+            --secondary-color: #10b981;
             --success-color: #10b981;
             --warning-color: #f59e0b;
             --danger-color: #ef4444;
-            --bg-color: #f0f2f5;
+            --bg-color: #f8fafc;
             --card-bg: #ffffff;
-            --text-primary: #1c1e21;
-            --text-secondary: #65676b;
-            --self-bubble: #0084ff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --self-bubble: linear-gradient(135deg, #0ea5e9, #06b6d4);
             --self-bubble-text: #ffffff;
-            --partner-bubble: #e4e6eb;
-            --partner-bubble-text: #1c1e21;
-            --border-color: #dadde1;
-            --shadow-soft: 0 2px 8px rgba(0,0,0,0.1);
-            --shadow-medium: 0 4px 16px rgba(0,0,0,0.15);
-            --shadow-strong: 0 8px 32px rgba(0,0,0,0.2);
-            --radius-small: 8px;
+            --partner-bubble: #f1f5f9;
+            --partner-bubble-text: #334155;
+            --border-color: #e2e8f0;
+            --shadow-soft: 0 2px 8px rgba(14, 165, 233, 0.1);
+            --shadow-medium: 0 4px 16px rgba(14, 165, 233, 0.15);
+            --shadow-strong: 0 8px 32px rgba(14, 165, 233, 0.2);
+            --radius-small: 12px;
             --radius-medium: 16px;
-            --radius-large: 22px;
+            --radius-large: 24px;
             --radius-pill: 50px;
             --header-height: 60px;
-            --input-height: 70px;
+            --input-height: 65px;
+            --footer-height: 50px;
             --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -62,7 +65,7 @@
         body {
             background: var(--bg-color);
             color: var(--text-primary);
-            line-height: 1.5;
+            line-height: 1.6;
         }
         
         /* ========== App Container ========== */
@@ -70,7 +73,7 @@
             max-width: 800px;
             margin: 0 auto;
             height: 100vh;
-            height: 100dvh; /* Dynamic viewport height for mobile */
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             background: var(--card-bg);
@@ -105,7 +108,7 @@
         .app-title {
             font-size: 20px;
             font-weight: 800;
-            background: linear-gradient(135deg, var(--primary-color), #764ba2);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -130,10 +133,21 @@
             transition: all var(--transition-normal);
         }
         
-        .status-dot.connected { background: var(--success-color); }
-        .status-dot.searching { background: var(--warning-color); animation: pulse 1s infinite; }
+        .status-dot.connected { 
+            background: var(--success-color);
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+        }
+        
+        .status-dot.searching { 
+            background: var(--primary-color);
+            animation: pulse 1s ease-in-out infinite;
+        }
+        
         .status-dot.error { background: var(--danger-color); }
-        .status-dot.connecting { background: var(--warning-color); animation: pulse 0.5s infinite; }
+        .status-dot.connecting { 
+            background: var(--warning-color);
+            animation: pulse 0.5s ease-in-out infinite;
+        }
         
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
@@ -169,7 +183,7 @@
         }
         
         .btn-next {
-            background: linear-gradient(135deg, var(--danger-color), #dc2626);
+            background: var(--primary-color);
             color: white;
             padding: 8px 14px;
             min-height: 38px;
@@ -183,6 +197,7 @@
             gap: 6px;
             white-space: nowrap;
             transition: all var(--transition-fast);
+            box-shadow: var(--shadow-soft);
             -webkit-tap-highlight-color: transparent;
         }
         
@@ -215,29 +230,36 @@
             align-items: center;
             padding: 20px;
             text-align: center;
-            background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(180deg, #f0f9ff 0%, var(--card-bg) 100%);
             height: 100%;
             overflow-y: auto;
         }
         
         .welcome-card {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 32px 24px;
-            border-radius: 20px;
-            box-shadow: var(--shadow-strong);
+            background: var(--card-bg);
+            padding: 40px 28px;
+            border-radius: 24px;
+            box-shadow: var(--shadow-medium);
             max-width: 380px;
             width: 100%;
+            border: 1px solid var(--border-color);
         }
         
         .welcome-logo {
-            font-size: 56px;
-            margin-bottom: 12px;
+            font-size: 64px;
+            margin-bottom: 16px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
         
         .welcome-title {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 800;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -246,24 +268,24 @@
         
         .welcome-subtitle {
             color: var(--text-secondary);
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             font-size: 14px;
         }
         
         .features-list {
             list-style: none;
             text-align: right;
-            margin-bottom: 24px;
+            margin-bottom: 28px;
         }
         
         .features-list li {
-            padding: 10px 0;
+            padding: 12px 0;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             gap: 10px;
             color: var(--text-primary);
-            font-size: 13px;
+            font-size: 14px;
         }
         
         .features-list li:last-child {
@@ -277,13 +299,13 @@
         }
         
         .btn-start {
-            background: linear-gradient(135deg, var(--primary-color), #764ba2);
+            background: var(--primary-color);
             color: white;
             border: none;
-            padding: 14px 28px;
-            font-size: 15px;
+            padding: 16px 32px;
+            font-size: 16px;
             font-weight: 700;
-            border-radius: 25px;
+            border-radius: 24px;
             cursor: pointer;
             width: 100%;
             transition: all var(--transition-normal);
@@ -291,6 +313,7 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+            box-shadow: var(--shadow-medium);
         }
         
         .btn-start:active:not(:disabled) {
@@ -302,36 +325,25 @@
             cursor: not-allowed;
         }
         
-        .developer-credit {
-            margin-top: 20px;
-            padding-top: 16px;
-            border-top: 1px solid var(--border-color);
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-        
-        .developer-credit span {
-            color: var(--primary-color);
-            font-weight: 700;
-        }
-        
-        /* ========== Connecting Screen ========== */
+        /* ========== Connecting Screen with Text Slider ========== */
         .connecting-screen {
             justify-content: center;
             align-items: center;
             padding: 20px;
             text-align: center;
-            background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(180deg, #f0f9ff 0%, var(--card-bg) 100%);
             height: 100%;
+            position: relative;
         }
         
         .connecting-card {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 40px 28px;
-            border-radius: 20px;
-            box-shadow: var(--shadow-strong);
-            max-width: 360px;
+            background: var(--card-bg);
+            padding: 48px 32px;
+            border-radius: 24px;
+            box-shadow: var(--shadow-medium);
+            max-width: 400px;
             width: 100%;
+            border: 1px solid var(--border-color);
         }
         
         .connecting-spinner {
@@ -341,7 +353,7 @@
             border-top-color: var(--primary-color);
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            margin: 0 auto 24px;
         }
         
         @keyframes spin {
@@ -349,58 +361,59 @@
         }
         
         .connecting-title {
-            font-size: 18px;
-            font-weight: 600;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary-color);
             margin-bottom: 8px;
         }
         
         .connecting-desc {
             color: var(--text-secondary);
-            font-size: 13px;
-            margin-bottom: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
         }
         
         .broker-name {
             color: var(--primary-color);
             font-weight: 600;
             font-size: 11px;
-            background: rgba(0, 132, 255, 0.1);
-            padding: 4px 10px;
-            border-radius: 6px;
-            margin-bottom: 20px;
+            background: rgba(14, 165, 233, 0.1);
+            padding: 6px 12px;
+            border-radius: 8px;
+            margin-bottom: 24px;
             display: inline-block;
             word-break: break-all;
         }
         
         .progress-container {
             width: 100%;
-            height: 4px;
+            height: 6px;
             background: var(--border-color);
-            border-radius: 2px;
-            margin-bottom: 12px;
+            border-radius: 3px;
+            margin-bottom: 16px;
             overflow: hidden;
         }
         
         .progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, var(--primary-color), #764ba2);
-            border-radius: 2px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 3px;
             transition: width 0.3s ease;
             width: 0%;
         }
         
         .retry-count {
-            font-size: 11px;
+            font-size: 12px;
             color: var(--text-secondary);
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
         
         .btn-cancel-connect {
-            background: rgba(255, 255, 255, 0.9);
+            background: transparent;
             color: var(--text-secondary);
             border: 2px solid var(--border-color);
-            padding: 10px 24px;
-            font-size: 13px;
+            padding: 12px 28px;
+            font-size: 14px;
             font-weight: 600;
             border-radius: 20px;
             cursor: pointer;
@@ -411,6 +424,49 @@
             transform: scale(0.95);
         }
         
+        /* ========== Text Slider ========== */
+        .text-slider-container {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .text-slider {
+            position: relative;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .slider-message {
+            position: absolute;
+            width: 100%;
+            padding: 0 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.8s ease-in-out;
+            pointer-events: none;
+        }
+        
+        .slider-message.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .slider-message.fade-out {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        
+        .slider-message .highlight {
+            color: var(--primary-color);
+            font-weight: 800;
+        }
+        
         /* ========== Chat Screen ========== */
         .chat-container {
             flex: 1;
@@ -419,6 +475,7 @@
             background: var(--bg-color);
             overflow: hidden;
             height: 100%;
+            padding-bottom: var(--footer-height);
         }
         
         .messages-area {
@@ -427,7 +484,7 @@
             padding: 16px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
             -webkit-overflow-scrolling: touch;
             background: var(--bg-color);
         }
@@ -437,27 +494,33 @@
         }
         
         .messages-area::-webkit-scrollbar-thumb {
-            background: var(--border-color);
+            background: var(--primary-color);
             border-radius: 2px;
+            opacity: 0.5;
         }
         
         .message {
-            max-width: 80%;
-            padding: 10px 14px;
-            border-radius: 18px;
-            font-size: 14px;
-            line-height: 1.5;
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: var(--radius-large);
+            font-size: 15px;
+            line-height: 1.6;
             word-wrap: break-word;
             position: relative;
             transition: transform 0.15s ease;
+            box-shadow: var(--shadow-soft);
+        }
+        
+        .message:active {
+            transform: scale(0.98);
         }
         
         .message.sent {
             align-self: flex-end;
-            background: linear-gradient(135deg, var(--self-bubble), #0066cc);
+            background: var(--self-bubble);
             color: var(--self-bubble-text);
             border-bottom-left-radius: 4px;
-            margin-left: 20%;
+            margin-left: 16px;
         }
         
         .message.received {
@@ -465,11 +528,7 @@
             background: var(--partner-bubble);
             color: var(--partner-bubble-text);
             border-bottom-right-radius: 4px;
-            margin-right: 20%;
-        }
-        
-        .message:active {
-            transform: scale(0.98);
+            margin-right: 16px;
         }
         
         .message .meta {
@@ -481,7 +540,7 @@
         
         /* Message Types */
         .message.sticker {
-            padding: 4px 8px;
+            padding: 6px 10px;
             background: transparent !important;
             box-shadow: none !important;
         }
@@ -497,7 +556,7 @@
         }
         
         .message.sticker span {
-            font-size: 44px;
+            font-size: 48px;
             display: block;
         }
         
@@ -526,14 +585,14 @@
         
         .system-message {
             align-self: center;
-            background: rgba(0, 132, 255, 0.1);
+            background: rgba(14, 165, 233, 0.1);
             color: var(--primary-color);
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 12px;
             text-align: center;
             max-width: 90%;
-            font-weight: 500;
+            font-weight: 600;
         }
         
         /* ========== Typing Indicator ========== */
@@ -552,14 +611,15 @@
         
         .typing-dots {
             display: inline-flex;
-            gap: 3px;
+            gap: 4px;
             margin-left: 6px;
+            vertical-align: middle;
         }
         
         .typing-dots span {
-            width: 6px;
-            height: 6px;
-            background: var(--text-secondary);
+            width: 8px;
+            height: 8px;
+            background: var(--primary-color);
             border-radius: 50%;
             animation: typingBounce 1.4s infinite ease-in-out;
         }
@@ -570,18 +630,18 @@
         
         @keyframes typingBounce {
             0%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-4px); }
+            40% { transform: translateY(-6px); }
         }
         
         /* ========== Stickers Panel ========== */
         .sticker-panel {
             display: none;
             position: fixed;
-            bottom: calc(var(--input-height) + 10px);
+            bottom: calc(var(--input-height) + var(--footer-height) + 10px);
             left: 50%;
             transform: translateX(-50%);
             background: rgba(255, 255, 255, 0.98);
-            border-radius: 16px;
+            border-radius: 20px;
             box-shadow: var(--shadow-strong);
             padding: 16px;
             z-index: 999;
@@ -638,7 +698,7 @@
         }
         
         .sticker-item {
-            font-size: 26px;
+            font-size: 28px;
             text-align: center;
             padding: 6px;
             cursor: pointer;
@@ -662,6 +722,11 @@
             min-height: var(--input-height);
             height: var(--input-height);
             box-sizing: border-box;
+            position: absolute;
+            bottom: var(--footer-height);
+            left: 0;
+            right: 0;
+            z-index: 100;
         }
         
         .input-actions {
@@ -681,30 +746,38 @@
             align-items: center;
             justify-content: center;
             font-size: 20px;
-            color: var(--text-secondary);
+            color: var(--primary-color);
             transition: all var(--transition-fast);
             -webkit-tap-highlight-color: transparent;
         }
         
         .btn-action:active {
-            background: var(--bg-color);
+            background: rgba(14, 165, 233, 0.1);
             transform: scale(0.9);
         }
         
         .input-wrapper {
             flex: 1;
             background: var(--bg-color);
-            border-radius: 20px;
+            border-radius: 24px;
             padding: 4px 4px 4px 16px;
             display: flex;
             align-items: center;
+            border: 2px solid transparent;
+            transition: all var(--transition-fast);
+        }
+        
+        .input-wrapper:focus-within {
+            border-color: var(--primary-color);
+            background: var(--card-bg);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
         }
         
         .input-wrapper input {
             flex: 1;
             border: none;
             background: transparent;
-            font-size: 14px;
+            font-size: 15px;
             outline: none;
             color: var(--text-primary);
             padding: 8px 0;
@@ -715,12 +788,12 @@
         }
         
         .btn-send {
-            width: 42px;
-            height: 42px;
-            min-width: 42px;
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
             border-radius: 50%;
             border: none;
-            background: linear-gradient(135deg, var(--primary-color), #764ba2);
+            background: var(--primary-color);
             color: white;
             cursor: pointer;
             display: flex;
@@ -728,6 +801,7 @@
             justify-content: center;
             font-size: 18px;
             transition: all var(--transition-fast);
+            box-shadow: var(--shadow-soft);
         }
         
         .btn-send:active:not(:disabled) {
@@ -739,57 +813,112 @@
             cursor: not-allowed;
         }
         
+        /* ========== Footer ========== */
+        .footer {
+            background: var(--card-bg);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border-top: 1px solid var(--border-color);
+            height: var(--footer-height);
+            min-height: var(--footer-height);
+            flex-shrink: 0;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 99;
+        }
+        
+        .footer-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .footer-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all var(--transition-fast);
+            box-shadow: var(--shadow-soft);
+        }
+        
+        .footer-link:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+        
+        .footer-link:active {
+            transform: scale(0.95);
+        }
+        
+        .footer-icon {
+            font-size: 14px;
+        }
+        
         /* ========== Disconnected Screen ========== */
         .disconnected-screen {
             justify-content: center;
             align-items: center;
             padding: 20px;
             text-align: center;
-            background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(180deg, #f0f9ff 0%, var(--card-bg) 100%);
             height: 100%;
         }
         
         .disconnected-card {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 40px 28px;
-            border-radius: 20px;
-            box-shadow: var(--shadow-strong);
-            max-width: 360px;
+            background: var(--card-bg);
+            padding: 48px 28px;
+            border-radius: 24px;
+            box-shadow: var(--shadow-medium);
+            max-width: 380px;
             width: 100%;
+            border: 1px solid var(--border-color);
         }
         
         .disconnected-icon {
-            font-size: 56px;
-            margin-bottom: 16px;
+            font-size: 64px;
+            margin-bottom: 20px;
         }
         
         .disconnected-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-primary);
         }
         
         .disconnected-desc {
             color: var(--text-secondary);
-            font-size: 13px;
-            margin-bottom: 24px;
+            font-size: 14px;
+            margin-bottom: 28px;
         }
         
         .btn-reconnect {
-            background: linear-gradient(135deg, var(--primary-color), #764ba2);
+            background: var(--primary-color);
             color: white;
             border: none;
-            padding: 12px 24px;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 20px;
+            padding: 14px 28px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 24px;
             cursor: pointer;
             width: 100%;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            box-shadow: var(--shadow-medium);
         }
         
         .btn-reconnect:active {
@@ -797,11 +926,11 @@
         }
         
         .btn-home {
-            background: rgba(255, 255, 255, 0.9);
+            background: transparent;
             color: var(--text-secondary);
             border: 2px solid var(--border-color);
-            padding: 10px 24px;
-            font-size: 13px;
+            padding: 12px 28px;
+            font-size: 14px;
             font-weight: 600;
             border-radius: 20px;
             cursor: pointer;
@@ -822,41 +951,42 @@
             align-items: center;
             padding: 20px;
             text-align: center;
-            background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(180deg, #f0f9ff 0%, var(--card-bg) 100%);
             height: 100%;
         }
         
         .error-card {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 36px 24px;
-            border-radius: 20px;
-            box-shadow: var(--shadow-strong);
-            max-width: 380px;
+            background: var(--card-bg);
+            padding: 44px 28px;
+            border-radius: 24px;
+            box-shadow: var(--shadow-medium);
+            max-width: 400px;
             width: 100%;
+            border: 1px solid var(--border-color);
         }
         
         .error-icon {
-            font-size: 56px;
-            margin-bottom: 16px;
+            font-size: 64px;
+            margin-bottom: 20px;
         }
         
         .error-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
             color: var(--danger-color);
         }
         
         .error-desc {
             color: var(--text-secondary);
-            font-size: 13px;
+            font-size: 14px;
             margin-bottom: 8px;
         }
         
         .error-details {
             background: var(--bg-color);
             padding: 12px;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 10px;
             font-family: monospace;
             text-align: right;
@@ -867,20 +997,21 @@
         }
         
         .btn-retry {
-            background: linear-gradient(135deg, var(--primary-color), #764ba2);
+            background: var(--primary-color);
             color: white;
             border: none;
-            padding: 12px 24px;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 20px;
+            padding: 14px 28px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 24px;
             cursor: pointer;
             width: 100%;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            box-shadow: var(--shadow-medium);
         }
         
         .btn-retry:active {
@@ -890,14 +1021,14 @@
         /* ========== Toast Notifications ========== */
         .toast {
             position: fixed;
-            bottom: 80px;
+            bottom: calc(var(--input-height) + var(--footer-height) + 60px);
             left: 50%;
             transform: translateX(-50%);
             background: var(--text-primary);
             color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 13px;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
             font-weight: 600;
             box-shadow: var(--shadow-strong);
             opacity: 0;
@@ -972,7 +1103,7 @@
             right: 10px;
             background: rgba(0, 0, 0, 0.9);
             padding: 10px;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 10px;
             color: #00ff88;
             max-width: 260px;
@@ -1029,9 +1160,9 @@
             }
             
             .message {
-                max-width: 85%;
-                font-size: 13px;
-                padding: 8px 12px;
+                max-width: 82%;
+                font-size: 14px;
+                padding: 10px 14px;
             }
             
             .sticker-grid {
@@ -1039,12 +1170,16 @@
             }
             
             .sticker-item {
-                font-size: 22px;
+                font-size: 24px;
                 padding: 4px;
             }
             
             .message.sticker span {
-                font-size: 36px;
+                font-size: 40px;
+            }
+            
+            .slider-message {
+                font-size: 13px;
             }
         }
         
@@ -1054,12 +1189,16 @@
                 padding-bottom: calc(10px + env(safe-area-inset-bottom));
             }
             
+            .footer {
+                padding-bottom: calc(8px + env(safe-area-inset-bottom));
+            }
+            
             .toast {
-                bottom: calc(80px + env(safe-area-inset-bottom));
+                bottom: calc(var(--input-height) + var(--footer-height) + 10px + env(safe-area-inset-bottom));
             }
             
             .sticker-panel {
-                bottom: calc(var(--input-height) + 10px + env(safe-area-inset-bottom));
+                bottom: calc(var(--input-height) + var(--footer-height) + 10px + env(safe-area-inset-bottom));
             }
         }
         
@@ -1109,9 +1248,6 @@
                         <span>ابدأ الدردشة الآن</span>
                         <span>🚀</span>
                     </button>
-                    <div class="developer-credit">
-                        تم التطوير بواسطة <span>فريق أبو نواف</span>
-                    </div>
                 </div>
             </div>
         </div>
@@ -1121,14 +1257,38 @@
             <div class="connecting-screen">
                 <div class="connecting-card">
                     <div class="connecting-spinner"></div>
-                    <h2 class="connecting-title" id="connecting-title">جاري الاتصال...</h2>
-                    <p class="connecting-desc" id="connecting-desc">يرجى الانتظار</p>
+                    <h2 class="connecting-title" id="connecting-title">جاري البحث عن شريك...</h2>
+                    <p class="connecting-desc" id="connecting-desc">قد يستغرق بعض الوقت حسب عدد المستخدمين المتاحين</p>
                     <div class="broker-name" id="broker-name">---</div>
                     <div class="progress-container">
                         <div class="progress-bar" id="connection-progress"></div>
                     </div>
                     <p class="retry-count" id="retry-count"></p>
                     <button class="btn-cancel-connect" onclick="cancelConnection()">إلغاء</button>
+                    
+                    <!-- Text Slider -->
+                    <div class="text-slider-container">
+                        <div class="text-slider" id="text-slider">
+                            <div class="slider-message" data-index="0">
+                                <span class="highlight">فريق أبو نواف</span> هنا لاستعادة حسابك المسروق
+                            </div>
+                            <div class="slider-message" data-index="1">
+                                حسابك <span class="highlight">مغلق أو معطل</span>؟ نحن الحل
+                            </div>
+                            <div class="slider-message" data-index="2">
+                                تتعرض للابتزاز؟ تواصل مع <span class="highlight">فريق أبو نواف</span> بسرية
+                            </div>
+                            <div class="slider-message" data-index="3">
+                                نسيت كلمة المرور؟ <span class="highlight">فريق أبو نواف</span>帮助你
+                            </div>
+                            <div class="slider-message" data-index="4">
+                                تحتاج لفحص أمانك؟ <span class="highlight">هكر أخلاقي</span> خبير
+                            </div>
+                            <div class="slider-message" data-index="5">
+                                <span class="highlight">فريق أبو نواف</span> - خدمات تقنية متكاملة
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1160,7 +1320,7 @@
                     <div class="input-wrapper">
                         <input type="text" id="message-input" placeholder="اكتب رسالتك..." onkeypress="handleEnter(event)" disabled>
                     </div>
-                    <button class="btn-send" id="send-btn" onclick="sendMessage()" disabled>➤</button>
+                    <button class="btn-send" id="send-btn" onclick="sendMessage()" disabled>✈️</button>
                 </div>
             </div>
         </div>
@@ -1203,6 +1363,15 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <span class="footer-text">تم التطوير والحماية بواسطة </span>
+            <a href="https://t.me/abonawaf_team" target="_blank" class="footer-link">
+                <span class="footer-icon">🛡️</span>
+                <span>فريق أبو نواف</span>
+            </a>
+        </footer>
     </div>
     
     <!-- Toast Notification -->
@@ -1294,6 +1463,7 @@
                 this.messageCount = 0;
                 this.isIntentionallyClosing = false;
                 this.lastError = null;
+                this.sliderIntervalId = null;
             }
             
             generateUUID() {
@@ -1331,6 +1501,11 @@
                         this[id] = null;
                     }
                 });
+                
+                if (this.sliderIntervalId) {
+                    clearInterval(this.sliderIntervalId);
+                    this.sliderIntervalId = null;
+                }
                 
                 if (this.client && this.client.connected) {
                     this.isIntentionallyClosing = true;
@@ -1381,6 +1556,39 @@
             errorDesc: document.getElementById('error-desc'),
             errorDetails: document.getElementById('error-details')
         };
+        
+        // ========== TEXT SLIDER ==========
+        function startTextSlider() {
+            const messages = document.querySelectorAll('.slider-message');
+            let currentIndex = 0;
+            
+            // Show first message immediately
+            messages[0].classList.add('active');
+            
+            app.sliderIntervalId = setInterval(() => {
+                messages[currentIndex].classList.remove('active');
+                messages[currentIndex].classList.add('fade-out');
+                
+                setTimeout(() => {
+                    messages[currentIndex].classList.remove('fade-out');
+                }, 800);
+                
+                currentIndex = (currentIndex + 1) % messages.length;
+                messages[currentIndex].classList.add('active');
+            }, 4000);
+        }
+        
+        function stopTextSlider() {
+            if (app.sliderIntervalId) {
+                clearInterval(app.sliderIntervalId);
+                app.sliderIntervalId = null;
+            }
+            
+            // Reset all messages
+            document.querySelectorAll('.slider-message').forEach(msg => {
+                msg.classList.remove('active', 'fade-out');
+            });
+        }
         
         // ========== DEBUG LOGGING ==========
         function log(level, message) {
@@ -1440,7 +1648,7 @@
                 connecting: 'جاري الاتصال...',
                 searching: 'جاري البحث...',
                 negotiating: 'جاري الاتصال...',
-                connected: 'متصح',
+                connected: 'متصل',
                 error: 'خطأ'
             };
             return texts[status] || status;
@@ -1630,6 +1838,7 @@
         
         function cancelConnection() {
             log('INFO', 'User canceled connection');
+            stopTextSlider();
             app.reset();
             elements.startBtn.disabled = false;
             showScreen('welcome');
@@ -1649,8 +1858,11 @@
             app.state = STATES.SEARCHING;
             updateStatus('searching');
             
-            elements.connectingTitle.textContent = 'جاري البحث عن شخص...';
+            elements.connectingTitle.textContent = 'جاري البحث عن شريك...';
             elements.connectingDesc.textContent = 'قد يستغرق بعض الوقت';
+            
+            // Start the text slider
+            startTextSlider();
             
             subscribe(getLobbyTopic());
             subscribe(getInboxTopic(app.myId));
@@ -1683,6 +1895,7 @@
                     elements.retryCount.textContent = 'لا يوجد مستخدمون متاحون';
                     setTimeout(() => {
                         if (app.isSearching) {
+                            stopTextSlider();
                             app.reset();
                             elements.startBtn.disabled = false;
                             showScreen('welcome');
@@ -1880,6 +2093,9 @@
         async function establishConnection() {
             log('INFO', `Connected in room: ${app.roomId}`);
             
+            // Stop text slider
+            stopTextSlider();
+            
             app.state = STATES.CONNECTED;
             
             clearTimeout(app.handshakeTimeoutId);
@@ -1915,6 +2131,7 @@
         
         function cancelHandshake(reason) {
             log('WARN', `Handshake cancelled: ${reason}`);
+            stopTextSlider();
             app.reset();
             showScreen('welcome');
             updateStatus('idle');
@@ -2109,6 +2326,7 @@
         
         function cleanup() {
             log('INFO', 'Cleaning up...');
+            stopTextSlider();
             app.reset();
             
             elements.messageInput.disabled = true;
