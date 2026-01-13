@@ -1365,11 +1365,11 @@
         </div>
         
         <!-- Footer -->
-        <footer class="footer">
+        <footer class="footer" id="app-footer">
             <span class="footer-text">تم التطوير والحماية بواسطة </span>
             <a href="https://t.me/abonawaf_team" target="_blank" class="footer-link">
                 <span class="footer-icon">🛡️</span>
-                <span>فريق أبو نواف</span>
+                <span>فريق أبو نواف</span> 🇸🇦
             </a>
         </footer>
     </div>
@@ -1554,7 +1554,8 @@
             debugContent: document.getElementById('debug-content'),
             errorTitle: document.getElementById('error-title'),
             errorDesc: document.getElementById('error-desc'),
-            errorDetails: document.getElementById('error-details')
+            errorDetails: document.getElementById('error-details'),
+            footer: document.getElementById('app-footer')
         };
         
         // ========== TEXT SLIDER ==========
@@ -1667,6 +1668,7 @@
             elements.errorDetails.textContent = details;
             app.lastError = { title, desc, details };
             updateStatus('error');
+            showFooter();
             showScreen('error');
         }
         
@@ -2116,6 +2118,7 @@
             }
             
             showScreen('chat');
+            hideFooter();
             elements.messagesArea.innerHTML = '';
             addSystemMessage('تم الاتصال! 👋');
             addSystemMessage('أهلاً وسهلاً! كيف حالك؟');
@@ -2305,6 +2308,19 @@
             elements.typingIndicator.classList.remove('show');
         }
         
+        // ========== FOOTER MANAGEMENT ==========
+        function hideFooter() {
+            if (elements.footer) {
+                elements.footer.style.display = 'none';
+            }
+        }
+        
+        function showFooter() {
+            if (elements.footer) {
+                elements.footer.style.display = 'flex';
+            }
+        }
+        
         // ========== NAVIGATION ==========
         function findNewPartner() {
             log('INFO', 'Finding new partner...');
@@ -2319,6 +2335,7 @@
         
         function goHome() {
             cleanup();
+            showFooter();
             showScreen('welcome');
             updateStatus('idle');
             elements.startBtn.disabled = false;
@@ -2340,6 +2357,7 @@
             log('INFO', 'Partner left: ' + reason);
             
             cleanup();
+            showFooter();
             
             document.getElementById('disconnect-title').textContent = reason;
             document.getElementById('disconnect-desc').textContent = 'هل تريد التحدث مع شخص آخر؟';
